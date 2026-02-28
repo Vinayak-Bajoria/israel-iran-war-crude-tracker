@@ -1,0 +1,7 @@
+streamlit>=1.30.0
+plotly>=5.18.0
+pandas>=2.0.0
+yfinance>=0.2.30
+requests>=2.31.0
+pymongo[srv]>=4.6.0
+certifi>=2023.0.0
