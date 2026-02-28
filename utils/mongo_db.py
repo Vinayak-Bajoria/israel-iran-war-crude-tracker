@@ -52,7 +52,13 @@ def _get_uri():
 def _get_db():
     global _client, _db
     if _db is None:
-        _client = MongoClient(_get_uri(), tlsCAFile=certifi.where())
+        _client = MongoClient(
+            _get_uri(),
+            tls=True,
+            tlsCAFile=certifi.where(),
+            serverSelectionTimeoutMS=10000,
+            connectTimeoutMS=10000,
+        )
         _db = _client[DB_NAME]
     return _db
 
