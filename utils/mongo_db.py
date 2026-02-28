@@ -27,14 +27,12 @@ _db = None
 # Connection string priority:
 # 1. Streamlit secrets  (when deployed on Streamlit Cloud)
 # 2. Environment variable MONGO_URI  (for local / Airflow)
-# 3. Hardcoded default (for development)
 
-DEFAULT_URI = "REDACTED"
 DB_NAME = "oil_gas_war"
 
 
 def _get_uri():
-    """Resolve MongoDB URI from secrets / env / default."""
+    """Resolve MongoDB URI from Streamlit secrets or MONGO_URI env var."""
     # Streamlit secrets
     try:
         import streamlit as st
@@ -46,7 +44,9 @@ def _get_uri():
     uri = os.environ.get("MONGO_URI")
     if uri:
         return uri
-    return DEFAULT_URI
+    raise RuntimeError(
+        "MongoDB URI not configured. Set MONGO_URI env var or add [mongo] uri to .streamlit/secrets.toml"
+    )
 
 
 def _get_db():
