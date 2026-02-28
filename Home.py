@@ -106,7 +106,7 @@ st.markdown("""
     <h1>Israel-Iran War Crude Commodity Tracker</h1>
     <p>
         Real-time and historical analysis of <b>Nifty Oil & Gas ETF constituents</b>
-        against <b>WTI & Brent Crude Oil</b> benchmarks.<br>
+        against <b>WTI & Brent Crude Oil</b> benchmarks and the <b>Nifty 50</b> index.<br>
         Built to study the impact of the <b>Israel-Iran War (June 2025)</b>
         on Indian oil & gas equities.
     </p>
@@ -123,10 +123,10 @@ with col1:
     <div class="arch-card">
         <h4>Data Ingestion</h4>
         <p>
-            An <b>Airflow DAG</b> runs every 30 min and fetches data from two sources:
+            An <b>Airflow DAG</b> runs every 30 min and fetches data from three sources:
         </p>
         <ul>
-            <li><b>Groww API</b> — All 15 Indian oil & gas stocks (NSE)</li>
+            <li><b>Groww API</b> — 14 Nifty Oil & Gas ETF stocks + Nifty 50 index</li>
             <li><b>Yahoo Finance</b> — WTI & Brent crude oil benchmarks</li>
         </ul>
         <p style="margin-top:0.8rem;">
@@ -164,14 +164,14 @@ with col3:
     <div class="arch-card">
         <h4>Visualization</h4>
         <p>
-            This <b>Streamlit app</b> reads from SQLite and renders
+            This <b>Streamlit app</b> reads from MongoDB Atlas and renders
             interactive Plotly charts:
         </p>
         <ul>
-            <li>Sector averages vs Crude & Nifty 50</li>
-            <li>Individual upstream / downstream stocks</li>
-            <li>Single-stock deep-dive (dropdown)</li>
-            <li>Performance leaderboard</li>
+            <li>Sector averages vs Crude Oil & Nifty 50</li>
+            <li>Nifty 50 benchmark analysis</li>
+            <li>Individual upstream / downstream / gas stocks</li>
+            <li>Per-section date range filtering</li>
         </ul>
         <p style="margin-top:0.8rem;">
             <span class="tech-badge">Streamlit</span>
@@ -182,42 +182,53 @@ with col3:
 
 # ── ETF Constituents ─────────────────────────────────────────────────────────
 st.markdown("---")
-st.markdown("### Nifty Oil & Gas ETF — 14 Constituents")
+st.markdown("### What We Track")
 
-c1, c2, c3 = st.columns(3)
+c1, c2, c3, c4 = st.columns(4)
 
 with c1:
+    st.markdown("""
+    **Crude Oil Benchmarks**
+    - WTI Crude (CL=F)
+    - Brent Crude (BZ=F)
+
+    _Global oil price drivers._
+    """)
+
+with c2:
     st.markdown("""
     **Upstream** _(Producers)_
     - ONGC
     - Oil India
     - Reliance Industries
 
-    _Benefit from rising crude prices._
-    """)
-
-with c2:
-    st.markdown("""
-    **Downstream** _(Refiners)_
-    - IOC
-    - BPCL
-    - HPCL
-    - MRPL
-
-    _Hurt by crude spikes — input cost rises._
+    _Benefit from rising crude._
     """)
 
 with c3:
     st.markdown("""
-    **Gas Distribution**
-    - GAIL
-    - Petronet LNG
-    - IGL
-    - MGL
-    - Gujarat Gas
-    - Adani Total Gas
-    - GSPL
+    **Downstream** _(Refiners)_
+    - IOC · BPCL
+    - HPCL · MRPL
+
+    _Hurt by crude spikes._
     """)
+
+with c4:
+    st.markdown("""
+    **Gas Distribution**
+    - GAIL · Petronet LNG
+    - IGL · MGL
+    - Gujarat Gas
+    - Adani Total Gas · GSPL
+    """)
+
+st.markdown("")
+bc1, bc2 = st.columns(2)
+with bc1:
+    st.markdown("**Market Benchmark:** Nifty 50 — tracks the broader Indian market reaction")
+with bc2:
+    st.markdown("**14 Oil & Gas stocks** from the Nifty Oil & Gas ETF, grouped into 3 sectors")
 
 # ── Key Concepts ─────────────────────────────────────────────────────────────
 st.markdown("---")
