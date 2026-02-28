@@ -49,58 +49,19 @@ st.markdown("""
     <p>
         This page will provide <b>real-time analysis</b> of Oil & Gas stocks<br>
         starting from <b>February 15, 2026</b>, refreshed every 30 minutes via Airflow.<br><br>
-        The same charts, comparisons, and deep-dives from the War Analysis page,<br>
+        The same charts, comparisons, and deep-dives from the Wartime Analysis page,<br>
         but tracking <b>live market movements</b>.
     </p>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("### Setup Steps")
-
-c1, c2, c3 = st.columns(3)
-
-with c1:
-    st.markdown("""
-    <div class="step-card">
-        <h4>Step 1: Symlink the DAG</h4>
-        <p style="color:#78909C; font-size:0.85rem;">
-            Link the Airflow DAG to your dags folder:
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    st.code("ln -sf $(pwd)/dags/oil_gas_fetcher_dag.py ~/airflow/dags/", language="bash")
-
-with c2:
-    st.markdown("""
-    <div class="step-card">
-        <h4>Step 2: Start Airflow</h4>
-        <p style="color:#78909C; font-size:0.85rem;">
-            Make sure the scheduler and webserver are running:
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    st.code("airflow scheduler -D\nairflow webserver -D", language="bash")
-
-with c3:
-    st.markdown("""
-    <div class="step-card">
-        <h4>Step 3: Refresh this page</h4>
-        <p style="color:#78909C; font-size:0.85rem;">
-            Once the DAG runs, live data will appear here automatically.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("---")
-
-# ── Preview: Check if any live data exists ───────────────────────────────────
+# ── Check if any live data exists ────────────────────────────────────────────
 from utils.mongo_db import get_prices
 
 live_data = get_prices(start_date="2026-02-15")
 if not live_data.empty:
-    st.success(f"Live data found! {len(live_data)} rows from {live_data.index.min().date()} "
+    st.success(f"Live data found: {len(live_data)} rows from {live_data.index.min().date()} "
                f"to {live_data.index.max().date()}")
-    st.markdown("*Live charts will be built here in the next iteration.*")
     st.dataframe(live_data.tail(10), use_container_width=True)
 else:
-    st.info("No live data yet. The Airflow DAG will start populating data once activated.")
+    st.info("No live data yet. Data will appear here once the pipeline is active.")
