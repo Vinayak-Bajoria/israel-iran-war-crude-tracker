@@ -1,12 +1,12 @@
-# ⛽ Oil & Gas War Analysis
+# Israel-Iran War Crude Commodity Tracker
 
-**Real-time and historical comparison of Nifty Oil & Gas ETF constituents against WTI & Brent Crude Oil benchmarks.**
+**Real-time and historical analysis of Nifty Oil & Gas ETF constituents against WTI & Brent Crude Oil benchmarks and the Nifty 50 index.**
 
-Built to analyze the impact of the **Iran-Israel War (June 2025)** on Indian oil & gas equities, and provide ongoing live tracking.
+Built to study the impact of the **Israel-Iran War (June 2025)** on Indian oil & gas equities, with ongoing live tracking via Airflow.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
@@ -14,8 +14,8 @@ Built to analyze the impact of the **Iran-Israel War (June 2025)** on Indian oil
 │                                                               │
 │   ┌─────────────┐              ┌──────────────┐              │
 │   │  Groww API   │              │ Yahoo Finance │              │
-│   │  (MCP-style) │              │  (WTI/Brent)  │              │
-│   │  Indian Stks │              │  Crude Oil    │              │
+│   │  14 O&G stks │              │  WTI & Brent  │              │
+│   │  + Nifty 50  │              │  Crude Oil    │              │
 │   └──────┬──────┘              └──────┬───────┘              │
 │          │                            │                       │
 │          ▼                            ▼                       │
@@ -26,15 +26,15 @@ Built to analyze the impact of the **Iran-Israel War (June 2025)** on Indian oil
 │   └──────────────────┬──────────────────────┘                │
 │                      │                                        │
 └──────────────────────┼────────────────────────────────────────┘
-                       │ INSERT/UPSERT
+                       │ UPSERT
                        ▼
               ┌─────────────────┐
-              │   SQLite DB     │
-              │  market_data.db │
+              │  MongoDB Atlas  │
+              │    (cloud)      │
               │                 │
-              │  Tables:        │
-              │  • daily_prices │
-              │  • fetch_log    │
+              │  Collections:   │
+              │  - daily_prices │
+              │  - fetch_log    │
               └────────┬────────┘
                        │ READ
                        ▼
@@ -42,124 +42,143 @@ Built to analyze the impact of the **Iran-Israel War (June 2025)** on Indian oil
 │                    PRESENTATION LAYER                         │
 │                                                              │
 │   ┌──────────────────────────────────────────────────────┐   │
-│   │              Streamlit App (port 8502)                │   │
+│   │          Streamlit Cloud (Home.py)                    │   │
 │   │                                                      │   │
-│   │  Sidebar:                                            │   │
-│   │  ├── 🏠 Home        → Overview & architecture        │   │
-│   │  ├── ⛽ War Analysis → Jun 2025 Iran-Israel period   │   │
-│   │  └── 📡 Live Tracker→ Real-time from Feb 15, 2026   │   │
+│   │  Pages:                                              │   │
+│   │  ├── Home              → Overview & architecture     │   │
+│   │  ├── Wartime Analysis  → Jun 2025 Israel-Iran war    │   │
+│   │  └── Live Tracker      → Real-time from Feb 2026    │   │
 │   │                                                      │   │
 │   │  Charts (Plotly):                                    │   │
-│   │  • Sector avgs vs Crude & Nifty50                    │   │
-│   │  • Upstream individual vs Crude                      │   │
-│   │  • Downstream individual vs Crude                    │   │
-│   │  • Single stock deep-dive (dropdown)                 │   │
-│   │  • Performance leaderboard (bar chart)               │   │
+│   │  - Sector averages vs Crude & Nifty 50               │   │
+│   │  - Nifty 50 benchmark analysis                       │   │
+│   │  - Upstream / Downstream / Gas deep-dives            │   │
+│   │  - Per-section date range filtering                  │   │
 │   └──────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 oil-gas-war/
-├── README.md
-├── requirements.txt
-├── app.py                          # Streamlit entry point (Home page)
+├── Home.py                         # Streamlit entry point (Home page)
 ├── pages/
-│   ├── 1_⛽_War_Analysis.py        # Historical Jun 2025 analysis
-│   └── 2_📡_Live_Tracker.py        # Real-time tracker (Feb 15+)
+│   ├── 1_Wartime_Analysis.py       # Historical Jun 2025 war analysis
+│   └── 2_Live_Tracker.py           # Real-time tracker (coming soon)
 ├── utils/
 │   ├── __init__.py
-│   ├── constants.py                # Tickers, segments, colors, events
-│   ├── db.py                       # SQLite CRUD layer
-│   ├── groww_api.py                # Groww REST API wrapper (mirrors MCP)
+│   ├── constants.py                # Tickers, segments, colors, war events
+│   ├── mongo_db.py                 # MongoDB Atlas CRUD layer
+│   ├── db.py                       # Legacy SQLite layer (unused)
+│   ├── groww_api.py                # Groww REST API wrapper
 │   └── charts.py                   # Plotly chart builders
 ├── scripts/
 │   └── seed_war_data.py            # One-time: seed Jun 2025 data
 ├── dags/
-│   └── oil_gas_fetcher_dag.py      # Airflow DAG (symlink to ~/airflow/dags/)
-└── data/
-    └── market_data.db              # SQLite DB (auto-created)
+│   └── oil_gas_fetcher_dag.py      # Airflow DAG
+├── .streamlit/
+│   └── config.toml                 # Theme config
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## 🔧 Setup
+## Setup
 
 ### 1. Install dependencies
 
 ```bash
-cd oil-gas-war
 pip install -r requirements.txt
 ```
 
-### 2. Seed historical war data (June 2025)
+### 2. Configure MongoDB URI
+
+Create `.streamlit/secrets.toml` (git-ignored):
+
+```toml
+[mongo]
+uri = "mongodb+srv://USER:PASS@cluster.mongodb.net/?appName=Cluster0"
+```
+
+Or set the environment variable:
+
+```bash
+export MONGO_URI="mongodb+srv://USER:PASS@cluster.mongodb.net/?appName=Cluster0"
+```
+
+### 3. Seed historical war data (June 2025)
 
 ```bash
 python scripts/seed_war_data.py
 ```
 
-This populates `data/market_data.db` with daily close prices from Groww API.
-
-### 3. Set up Airflow DAG
-
-```bash
-# Symlink the DAG into Airflow's dags folder
-ln -sf $(pwd)/dags/oil_gas_fetcher_dag.py ~/airflow/dags/oil_gas_fetcher_dag.py
-```
-
 ### 4. Run the Streamlit app
 
 ```bash
-streamlit run app.py --server.port 8502
+streamlit run Home.py --server.port 8502
+```
+
+### 5. (Optional) Set up Airflow DAG for live data
+
+```bash
+ln -sf $(pwd)/dags/oil_gas_fetcher_dag.py ~/airflow/dags/
+airflow scheduler -D && airflow webserver -D
 ```
 
 ---
 
-## 📊 Data Sources
+## Deploy to Streamlit Cloud
 
-| Data | Source | Frequency |
-|------|--------|-----------|
-| Indian Stocks (NSE) | **Groww API** (same endpoints as Groww MCP) | Via Airflow DAG (30 min) |
-| WTI Crude (CL=F) | **Yahoo Finance** | Via Airflow DAG (30 min) |
-| Brent Crude (BZ=F) | **Yahoo Finance** | Via Airflow DAG (30 min) |
-| Nifty 50 Index | **Groww API** | Via Airflow DAG (30 min) |
-
----
-
-## ⛽ Nifty Oil & Gas ETF Constituents
-
-### Upstream (Oil Producers)
-ONGC, Oil India, Reliance Industries
-
-### Downstream (Refiners & Marketers)
-IOC, BPCL, HPCL (Hindustan Petroleum), MRPL
-
-### Gas Distribution
-GAIL, Petronet LNG, IGL, MGL, Gujarat Gas, Adani Total Gas, GSPL
-
-### Others
-Castrol India
+1. Push to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io)
+3. Select the repo, branch `main`, main file `Home.py`
+4. Under **Advanced Settings > Secrets**, add your `[mongo] uri`
+5. Ensure MongoDB Atlas Network Access allows `0.0.0.0/0`
 
 ---
 
-## 🔑 Key Concepts
+## Data Sources
 
-- **Indexed to 100**: All prices rebased so Day 1 = 100. A value of 108 means +8% from start.
-- **Upstream vs Downstream**: When crude spikes, upstream (producers) benefit; downstream (refiners) get margin-squeezed.
-- **War Period**: Jun 13 (Israel strikes Iran) → Jun 24 (ceasefire). Crude spiked ~17% (WTI).
+| Data | Source | Method |
+|------|--------|--------|
+| 14 Indian O&G stocks (NSE) | Groww API | Airflow DAG (30 min) |
+| Nifty 50 Index | Groww API | Airflow DAG (30 min) |
+| WTI Crude (CL=F) | Yahoo Finance | Airflow DAG (30 min) |
+| Brent Crude (BZ=F) | Yahoo Finance | Airflow DAG (30 min) |
 
 ---
 
-## 📡 How the Pipeline Works
+## Tracked Stocks (14 Nifty Oil & Gas ETF Constituents)
+
+| Segment | Stocks |
+|---------|--------|
+| **Upstream** (Producers) | ONGC, Oil India, Reliance Industries |
+| **Downstream** (Refiners) | IOC, BPCL, HPCL, MRPL |
+| **Gas Distribution** | GAIL, Petronet LNG, IGL, MGL, Gujarat Gas, Adani Total Gas, GSPL |
+
+**Benchmark:** Nifty 50 Index
+
+---
+
+## Key Concepts
+
+- **Indexed to 100** — All prices rebased so Day 1 = 100. A value of 108 means +8% from start.
+- **Upstream vs Downstream** — When crude spikes, upstream producers benefit while downstream refiners get margin-squeezed.
+- **War Period** — Jun 13 (Israel strikes Iran) to Jun 24 (ceasefire). WTI crude spiked ~17%.
+- **Date Range Filtering** — Each section has its own date picker to zoom into specific periods within June 2025.
+
+---
+
+## Pipeline Flow
 
 1. **Airflow DAG** triggers every 30 minutes
-2. **Task 1**: Calls Groww API for all 15 Indian stock daily candles → inserts into SQLite
-3. **Task 2**: Calls Yahoo Finance for WTI & Brent daily quotes → inserts into SQLite
-4. **Task 3**: Logs the fetch timestamp into `fetch_log` table
-5. **Streamlit** reads from SQLite on every page load (cached for 5 min)
+2. **Task 1**: Fetches daily candles for 14 stocks + Nifty 50 via Groww API → upserts into MongoDB Atlas
+3. **Task 2**: Fetches WTI & Brent via Yahoo Finance → upserts into MongoDB Atlas
+4. **Task 3**: Logs the fetch timestamp into `fetch_log` collection
+5. **Streamlit** reads from MongoDB Atlas on page load (cached 5 min)
 
-The SQLite DB acts as the **single source of truth** between Airflow and Streamlit.
+MongoDB Atlas serves as the **single source of truth** between the local Airflow pipeline and the cloud-hosted Streamlit app.
